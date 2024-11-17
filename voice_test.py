@@ -26,6 +26,7 @@ class VoiceCloner:
         """
         Extract speaker embedding from multiple WAV files in a directory using X-vector
         """
+        print(Path(wav_directory).glob("*.wav"))
         wav_files = list(Path(wav_directory).glob("*.wav"))
         if not wav_files:
             raise ValueError(f"No WAV files found in {wav_directory}")
