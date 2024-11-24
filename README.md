@@ -1,4 +1,4 @@
 # Custom-Voice-Narrator
  model custom voice to model text-to-speech
 
- Example generation: generated_speech.wav
+ Example generation: generated_speech.wav, enhanced_speech.wav
