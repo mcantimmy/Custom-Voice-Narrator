@@ -31,14 +31,14 @@ class EnhancedVoiceCloner:
         self.chunk_size = 8192
         self.overlap = 512
 
-    def butter_lowpass(self, cutoff, fs, order=5):
+    def butter_lowpass(self, cutoff, fs, order=3):
         """Design a lowpass filter"""
         nyq = 0.5 * fs
         normal_cutoff = cutoff / nyq
         b, a = butter(order, normal_cutoff, btype='low', analog=False)
         return b, a
 
-    def apply_lowpass_filter(self, data, cutoff, fs, order=5):
+    def apply_lowpass_filter(self, data, cutoff, fs, order=3):
         """Apply lowpass filter to smooth audio"""
         b, a = self.butter_lowpass(cutoff, fs, order=order)
         y = filtfilt(b, a, data)
@@ -60,7 +60,7 @@ class EnhancedVoiceCloner:
         audio = audio.astype(np.float32)
         
         # Apply lowpass filter to smooth high frequencies
-        audio = self.apply_lowpass_filter(audio, cutoff=7000, fs=self.sample_rate)
+        audio = self.apply_lowpass_filter(audio, cutoff=6000, fs=self.sample_rate)
         
         # Normalize audio
         audio = audio / np.max(np.abs(audio))
@@ -180,6 +180,6 @@ if __name__ == "__main__":
     
     voice_samples_dir = "voice_samples"
     text = "Hello, this is a test of voice cloning using SpeechT5 with X-vector embeddings."
-    output_path = "enhanced_speech.wav"
+    output_path = "enhanced_speech2.wav"
     
     cloner.clone_and_speak(voice_samples_dir, text, output_path)
