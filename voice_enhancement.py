@@ -161,7 +161,7 @@ class EnhancedVoiceCloner:
         sf.write(output_path, final_speech, samplerate=self.sample_rate)
 
     def clone_and_speak(self, voice_samples_dir, text, output_path):
-        """Main function for voice cloning and speech synthesis"""
+        """Main function for voice cloning and speech synthesis over text"""
         try:
             print("Extracting speaker embedding...")
             speaker_embedding = self.extract_speaker_embedding(voice_samples_dir)
