@@ -179,7 +179,7 @@ if __name__ == "__main__":
     cloner = EnhancedVoiceCloner()
     
     voice_samples_dir = "voice_samples"
-    text = "Hello, this is a test of voice cloning using SpeechT5 with X-vector embeddings."
+    text = "Hello, this is a test of voice cloning using SpeechT5 with X-vector embeddings. Does it sound better?"
     output_path = "enhanced_speech2.wav"
     
     cloner.clone_and_speak(voice_samples_dir, text, output_path)
