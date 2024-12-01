@@ -32,7 +32,7 @@ class EnhancedVoiceCloner:
         self.vocoder = self.vocoder.to(self.device)
         
         # Improved audio processing parameters
-        self.sample_rate = 22050  # Increased for better quality
+        self.sample_rate = 16000  # Increased for better quality
         self.chunk_size = 16384  # Increased for better context
         self.overlap = 1024
         # Initialize loudness meter
@@ -166,7 +166,7 @@ class EnhancedVoiceCloner:
 
     def synthesize_speech(self, text, speaker_embedding, output_path):
         """Enhanced speech synthesis with improved prosody"""
-        text = self.add_natural_pauses(text)
+        #text = self.add_natural_pauses(text)
         sentences = sent_tokenize(text)
         audio_segments = []
         
@@ -184,7 +184,7 @@ class EnhancedVoiceCloner:
                     inputs["input_ids"].to(self.device),
                     speaker_embeddings=speaker_embedding.to(self.device),
                     vocoder=self.vocoder,
-                    temperature=0.7  # Add variation
+                    #temperature=0.7  # Add variation
                 )
                 audio = speech.cpu().numpy()
                 
