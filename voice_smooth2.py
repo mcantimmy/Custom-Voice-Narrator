@@ -32,7 +32,7 @@ class EnhancedVoiceCloner:
         self.vocoder = self.vocoder.to(self.device)
         
         # Improved audio processing parameters
-        self.sample_rate = 22050  # Increased for better quality
+        self.sample_rate = 16000  # Increased for better quality
         self.chunk_size = 16384  # Increased for better context
         self.overlap = 1024
         # Initialize loudness meter
@@ -94,33 +94,82 @@ class EnhancedVoiceCloner:
         
         return audio
 
+    #def enhance_prosody(self, audio):
+    #    """Enhance speech prosody"""
+    #    # Extract pitch contour
+    #    f0, voiced_flag, voiced_probs = librosa.pyin(
+    #        audio, 
+    #        fmin=librosa.note_to_hz('C2'),
+    #        fmax=librosa.note_to_hz('C7')
+    #    )
+    #    
+    #    # Smooth pitch contour
+    #    f0_cleaned = medfilt(f0[voiced_flag], kernel_size=5)
+    #    
+    #    # Apply pitch correction
+    #    return self._apply_pitch_correction(audio, f0_cleaned, voiced_flag)
+    
     def enhance_prosody(self, audio):
-        """Enhance speech prosody"""
-        # Extract pitch contour
+        """
+        Enhance speech prosody with improved pitch processing.
+        This version handles arrays of different lengths safely.
+        """
+        # First, we'll extract the pitch contour with careful handling of array lengths
         f0, voiced_flag, voiced_probs = librosa.pyin(
             audio, 
             fmin=librosa.note_to_hz('C2'),
-            fmax=librosa.note_to_hz('C7')
+            fmax=librosa.note_to_hz('C7'),
+            sr=self.sample_rate,  # Explicitly specify sample rate
+            frame_length=2048     # Use consistent frame length
         )
         
-        # Smooth pitch contour
-        f0_cleaned = medfilt(f0[voiced_flag], kernel_size=5)
+        # Safety check: if we don't get valid pitch data, return original audio
+        if f0 is None or len(f0) == 0:
+            return audio
+            
+        # Create a mask for valid pitch values
+        valid_pitch = ~np.isnan(f0)
         
-        # Apply pitch correction
-        return self._apply_pitch_correction(audio, f0_cleaned, voiced_flag)
+        # Process only where we have valid pitch
+        if np.any(valid_pitch):
+            # Get valid pitch values
+            valid_f0 = f0[valid_pitch]
+            
+            if len(valid_f0) > 0:
+                # Smooth the valid pitch values
+                smoothed_f0 = medfilt(valid_f0, kernel_size=5)
+                
+                # Create output array same size as input
+                processed_f0 = np.zeros_like(f0)
+                processed_f0[valid_pitch] = smoothed_f0[:len(processed_f0[valid_pitch])]
+                
+                # Apply pitch correction carefully
+                correction_strength = 0.3
+                y_shifted = librosa.effects.pitch_shift(
+                    audio,
+                    sr=self.sample_rate,
+                    n_steps=correction_strength * np.nanmean(processed_f0)
+                )
+                
+                # Blend original and pitch-shifted audio
+                enhanced_audio = 0.7 * audio + 0.3 * y_shifted
+                return enhanced_audio
+        
+        # If no valid pitch processing possible, return original
+        return audio
 
-    def _apply_pitch_correction(self, audio, f0, voiced_flag):
-        """Apply subtle pitch correction to improve naturalness"""
-        # Implementation of pitch correction using f0 contour
-        correction_strength = 0.3  # Subtle correction
-        
-        y_shifted = librosa.effects.pitch_shift(
-            audio,
-            sr=self.sample_rate,
-            n_steps=correction_strength * np.mean(f0[voiced_flag])
-        )
-        
-        return y_shifted
+    #def _apply_pitch_correction(self, audio, f0, voiced_flag):
+    #    """Apply subtle pitch correction to improve naturalness"""
+    #    # Implementation of pitch correction using f0 contour
+    #    correction_strength = 0.3  # Subtle correction
+    #    
+    #    y_shifted = librosa.effects.pitch_shift(
+    #        audio,
+    #        sr=self.sample_rate,
+    #        n_steps=correction_strength * np.mean(f0[voiced_flag])
+    #    )
+    #    
+    #    return y_shifted
 
     def extract_speaker_embedding(self, wav_directory):
         """Enhanced speaker embedding extraction"""
