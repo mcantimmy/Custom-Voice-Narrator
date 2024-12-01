@@ -15,6 +15,19 @@ import pyloudnorm as pyln
 nltk.download('punkt')
 nltk.download('punkt_tab')
 
+class EmbeddingProjection(torch.nn.Module):
+    """Projects speaker embeddings from ECAPA-TDNN dimension to SpeechT5 dimension"""
+    def __init__(self, input_dim=960, output_dim=1280):
+        super().__init__()
+        self.projection = torch.nn.Linear(input_dim, output_dim)
+        
+        # Initialize weights to preserve embedding structure
+        torch.nn.init.orthogonal_(self.projection.weight)
+        torch.nn.init.zeros_(self.projection.bias)
+    
+    def forward(self, x):
+        return self.projection(x)
+
 class EnhancedVoiceCloner:
     def __init__(self):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -28,11 +41,14 @@ class EnhancedVoiceCloner:
             run_opts={"device": self.device}
         )
         
+        # Initialize embedding projection layer
+        self.embedding_projection = EmbeddingProjection().to(self.device)
+
         self.tts_model = self.tts_model.to(self.device)
         self.vocoder = self.vocoder.to(self.device)
         
         # Improved audio processing parameters
-        self.sample_rate = 16000  # Increased for better quality
+        self.sample_rate = 22050  # Increased for better quality
         self.chunk_size = 16384  # Increased for better context
         self.overlap = 1024
         # Initialize loudness meter
@@ -123,7 +139,7 @@ class EnhancedVoiceCloner:
         return y_shifted
 
     def extract_speaker_embedding(self, wav_directory):
-        """Enhanced speaker embedding extraction"""
+        """Enhanced speaker embedding extraction with dimension projection"""
         wav_files = list(Path(wav_directory).glob("*.wav"))
         if not wav_files:
             raise ValueError(f"No WAV files found in {wav_directory}")
@@ -162,10 +178,14 @@ class EnhancedVoiceCloner:
         weights[:len(wav_files)] = 1.2  # Give more weight to original embeddings
         average_embedding = np.average(embeddings_normalized, weights=weights, axis=0)
         
-        return torch.FloatTensor(average_embedding).reshape(1, -1)
+        # Convert to tensor and project to correct dimension
+        embedding_tensor = torch.FloatTensor(average_embedding).reshape(1, -1).to(self.device)
+        projected_embedding = self.embedding_projection(embedding_tensor)
+        
+        return projected_embedding
 
     def synthesize_speech(self, text, speaker_embedding, output_path):
-        """Enhanced speech synthesis with improved prosody"""
+        """Speech synthesis with projected embeddings"""
         #text = self.add_natural_pauses(text)
         sentences = sent_tokenize(text)
         audio_segments = []
@@ -174,26 +194,23 @@ class EnhancedVoiceCloner:
             if not sentence.strip():
                 continue
             
-            # Add prosody markers
             sentence = self._add_prosody_markers(sentence)
             inputs = self.processor(text=sentence, return_tensors="pt")
             
+            # Speaker embedding is already projected to correct dimension
             with torch.no_grad():
-                # Generate speech with temperature sampling
                 speech = self.tts_model.generate_speech(
                     inputs["input_ids"].to(self.device),
-                    speaker_embeddings=speaker_embedding.to(self.device),
+                    speaker_embeddings=speaker_embedding,  # Already projected
                     vocoder=self.vocoder,
-                    #temperature=0.7  # Add variation
+                    #temperature=0.7
                 )
                 audio = speech.cpu().numpy()
                 
-                # Enhanced audio processing
                 audio = self.process_audio(audio)
                 audio = self.enhance_prosody(audio)
                 audio_segments.append(audio)
                 
-                # Dynamic silence based on sentence length
                 silence_duration = min(0.3, len(sentence) * 0.02)
                 silence = np.zeros(int(silence_duration * self.sample_rate))
                 audio_segments.append(silence)
