@@ -60,7 +60,6 @@ Here's a TODO list for improving the voice cloner model:
 
 ## Code Structure and Documentation
 - [ ] Refactoring
-  - [ ] Split into smaller, focused classes
   - [ ] Implement better error handling
   - [ ] Add comprehensive logging
 
@@ -70,6 +69,7 @@ Here's a TODO list for improving the voice cloner model:
   - [ ] Document best practices for voice sampling
 
 ## Research Areas to Explore
+- [ ] Research natural-sounding products/apps
 - [ ] Investigate newer TTS architectures (FastSpeech2, YourTTS, Coqui)
 - [ ] Research emotional speech synthesis techniques
 - [ ] Study human speech patterns for better mimicry
