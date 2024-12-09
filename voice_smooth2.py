@@ -38,6 +38,7 @@ class EnhancedVoiceCloner:
         # Initialize loudness meter
         self.meter = pyln.Meter(self.sample_rate)
 
+    ##TODO: redesign this to be more modular and flexible
     def preprocess_training_audio(self, waveform, sample_rate):
         """Enhanced preprocessing for training audio samples"""
         # Resample if necessary
