@@ -74,7 +74,7 @@ class EnhancedVoiceCloner:
         normalized_audio = librosa.util.normalize(normalized_audio)
         
         return normalized_audio
-
+    ##TODO: make more smooth
     def _denoise_audio(self, audio):
         """Apply sophisticated denoising"""
         # Median filtering to remove impulse noise
