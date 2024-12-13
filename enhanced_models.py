@@ -104,7 +104,7 @@ class EnhancedVoiceCloner:
         output_path: str,
         language: str = "en",
         duration_scale: float = 1.0,
-        energy_scale: float = 1.0,
+        energy_scale: float = 1.2,
         f0_scale: float = 1.0
     ):
         """
@@ -145,8 +145,8 @@ class EnhancedVoiceCloner:
         waveform = waveform / torch.max(torch.abs(waveform))
         
         # Apply subtle compression
-        threshold = 0.95
-        ratio = 0.2
+        threshold = 0.98
+        ratio = 0.22
         mask = torch.abs(waveform) > threshold
         waveform[mask] = threshold + (torch.abs(waveform[mask]) - threshold) * ratio * torch.sign(waveform[mask])
         
@@ -170,7 +170,7 @@ class EnhancedVoiceCloner:
             logging.info("Generating speech...")
             prosody_params = prosody_control or {
                 "duration_scale": 1.0,
-                "energy_scale": 1.0,
+                "energy_scale": 1.2,
                 "f0_scale": 1.0
             }
             
@@ -201,8 +201,8 @@ if __name__ == "__main__":
     output_path = "enhanced_speech.wav"
     
     prosody_control = {
-        "duration_scale": 1.1,  # Slightly slower
-        "energy_scale": 1.0,    # Normal energy
+        "duration_scale": 1.0,  # Slightly slower
+        "energy_scale": 1.2,    # Normal energy
         "f0_scale": 1.0         # Normal pitch
     }
     
