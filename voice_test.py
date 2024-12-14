@@ -94,13 +94,13 @@ if __name__ == "__main__":
     cloner = VoiceCloner()
     
     # Directory containing voice samples (.wav files)
-    voice_samples_dir = "voice_samples"
+    voice_samples_dir = "lichking_samples"
     
     # Text to synthesize
     text = "Hello, this is a test of voice cloning using SpeechT5 with X-vector embeddings."
     
     # Output path for generated speech
-    output_path = "generated_speech.wav"
+    output_path = "lichking_speech.wav"
     
     # Clone voice and generate speech
     cloner.clone_and_speak(voice_samples_dir, text, output_path)

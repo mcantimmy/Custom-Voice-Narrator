@@ -153,7 +153,7 @@ class EnhancedVoiceCloner:
                 )
                 
                 # Blend original and pitch-shifted audio
-                enhanced_audio = 0.7 * audio + 0.3 * y_shifted
+                enhanced_audio = 0.9 * audio + 0.1 * y_shifted
                 return enhanced_audio
         
         # If no valid pitch processing possible, return original
@@ -328,8 +328,8 @@ class EnhancedVoiceCloner:
 if __name__ == "__main__":
     cloner = EnhancedVoiceCloner()
     
-    voice_samples_dir = "voice_samples"
+    voice_samples_dir = "lichking_samples"
     text = "Hello, this is a test of enhanced voice cloning. Notice the improved naturalness and clarity."
-    output_path = "enhanced_speech_v2.wav"
+    output_path = "lichking_speech_v2.wav"
     
     cloner.clone_and_speak(voice_samples_dir, text, output_path)
