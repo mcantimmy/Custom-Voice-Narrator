@@ -6,6 +6,7 @@ import soundfile as sf
 from pathlib import Path
 import numpy as np
 
+## TODO: USE SOTA MODELS
 class VoiceCloner:
     def __init__(self):
         # Initialize models and processor
