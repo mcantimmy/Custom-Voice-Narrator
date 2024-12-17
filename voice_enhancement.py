@@ -1,84 +1,30 @@
 import torch
 import torchaudio
-import numpy as np
-from transformers import SpeechT5Processor, SpeechT5ForTextToSpeech, SpeechT5HifiGan
+from transformers import VitsModel, AutoProcessor
 from speechbrain.pretrained import EncoderClassifier
 import soundfile as sf
 from pathlib import Path
-from scipy.signal import butter, filtfilt
-import nltk
-from nltk.tokenize import sent_tokenize
-nltk.download('punkt')
-nltk.download('punkt_tab')
+import numpy as np
 
-class EnhancedVoiceCloner:
+class VoiceCloner:
     def __init__(self):
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.processor = SpeechT5Processor.from_pretrained("microsoft/speecht5_tts")
-        self.tts_model = SpeechT5ForTextToSpeech.from_pretrained("microsoft/speecht5_tts")
-        self.vocoder = SpeechT5HifiGan.from_pretrained("microsoft/speecht5_hifigan")
+        # Initialize models and processor
+        self.processor = AutoProcessor.from_pretrained("facebook/mms-tts")
+        self.model = VitsModel.from_pretrained("facebook/mms-tts")
         self.speaker_encoder = EncoderClassifier.from_hparams(
             source="speechbrain/spkrec-xvect-voxceleb",
-            run_opts={"device": self.device}
+            run_opts={"device": "cuda" if torch.cuda.is_available() else "cpu"}
         )
         
-        # Move models to device
-        self.tts_model = self.tts_model.to(self.device)
-        self.vocoder = self.vocoder.to(self.device)
-        
-        # Audio processing parameters
-        self.sample_rate = 16000
-        self.chunk_size = 8192
-        self.overlap = 512
-
-    def butter_lowpass(self, cutoff, fs, order=3):
-        """Design a lowpass filter"""
-        nyq = 0.5 * fs
-        normal_cutoff = cutoff / nyq
-        b, a = butter(order, normal_cutoff, btype='low', analog=False)
-        return b, a
-
-    def apply_lowpass_filter(self, data, cutoff, fs, order=3):
-        """Apply lowpass filter to smooth audio"""
-        b, a = self.butter_lowpass(cutoff, fs, order=order)
-        y = filtfilt(b, a, data)
-        return y
-
-    def smooth_transitions(self, audio):
-        """Apply fade in/out to reduce abrupt transitions"""
-        fade_length = 128
-        fade_in = np.linspace(0, 1, fade_length)
-        fade_out = np.linspace(1, 0, fade_length)
-        
-        audio[:fade_length] *= fade_in
-        audio[-fade_length:] *= fade_out
-        return audio
-
-    def process_audio(self, audio):
-        """Apply various audio processing techniques"""
-        # Convert to float32 if not already
-        audio = audio.astype(np.float32)
-        
-        # Apply lowpass filter to smooth high frequencies
-        audio = self.apply_lowpass_filter(audio, cutoff=6000, fs=self.sample_rate)
-        
-        # Normalize audio
-        audio = audio / np.max(np.abs(audio))
-        
-        # Apply subtle compression
-        threshold = 0.3
-        ratio = 0.7
-        audio = np.where(np.abs(audio) > threshold,
-                        threshold + (np.abs(audio) - threshold) * ratio,
-                        audio)
-        
-        # Smooth transitions
-        audio = self.smooth_transitions(audio)
-        
-        return audio
+        # Move models to GPU if available
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.model.to(self.device)
 
     def extract_speaker_embedding(self, wav_directory):
-        """Extract and process speaker embeddings"""
+        """
+        Extract speaker embedding from multiple WAV files in a directory using X-vector
+        """
+        print(Path(wav_directory).glob("*.wav"))
         wav_files = list(Path(wav_directory).glob("*.wav"))
         if not wav_files:
             raise ValueError(f"No WAV files found in {wav_directory}")
@@ -86,100 +32,80 @@ class EnhancedVoiceCloner:
         embeddings = []
         
         for wav_path in wav_files:
+            # Load and resample audio if necessary
             waveform, sample_rate = torchaudio.load(wav_path)
-            
-            # Resample if necessary
-            if sample_rate != self.sample_rate:
-                resampler = torchaudio.transforms.Resample(sample_rate, self.sample_rate)
+            if sample_rate != 16000:
+                resampler = torchaudio.transforms.Resample(sample_rate, 16000)
                 waveform = resampler(waveform)
             
-            # Convert to mono and normalize
+            # Convert to mono if stereo
             if waveform.shape[0] > 1:
                 waveform = torch.mean(waveform, dim=0, keepdim=True)
-            waveform = waveform / torch.max(torch.abs(waveform))
             
+            # Extract embedding using SpeechBrain's X-vector
             with torch.no_grad():
                 embedding = self.speaker_encoder.encode_batch(waveform)
                 embedding = embedding.squeeze()
                 embeddings.append(embedding.cpu())
         
-        # Average embeddings
-        average_embedding = torch.mean(torch.stack(embeddings), dim=0).reshape(1, -1)
+        # Average all embeddings and ensure correct shape
+        average_embedding = torch.mean(torch.stack(embeddings), dim=0)
+        average_embedding = average_embedding.reshape(1, -1)
         return average_embedding
 
-    def add_natural_pauses(self, text):
-        """Add natural pauses and pacing to text"""
-        sentences = sent_tokenize(text)
-        processed_text = []
+    def synthesize_speech(self, text, speaker_embedding, output_path, language="eng"):
+        """
+        Synthesize speech from text using MMS-TTS
+        """
+        # Prepare text input
+        inputs = self.processor(
+            text=text,
+            return_tensors="pt",
+            language=language
+        ).to(self.device)
         
-        for sentence in sentences:
-            # Add slight pause after sentence
-            processed_text.append(sentence + ".")
-        
-        return " ".join(processed_text)
-
-    def synthesize_speech(self, text, speaker_embedding, output_path):
-        """Synthesize speech with enhanced processing"""
-        # Add natural pauses
-        text = self.add_natural_pauses(text)
-        
-        # Split into sentences for better processing
-        sentences = sent_tokenize(text)
-        audio_segments = []
-        
-        for sentence in sentences:
-            if not sentence.strip():
-                continue
+        # Generate speech
+        with torch.no_grad():
+            # Forward pass through the model
+            outputs = self.model(
+                input_ids=inputs["input_ids"],
+                attention_mask=inputs["attention_mask"],
+                speaker_embeddings=speaker_embedding.to(self.device)
+            )
             
-            # Add pause markers for more natural speech
-            sentence = sentence.strip() + '.'
-            inputs = self.processor(text=sentence, return_tensors="pt")
-            
-            with torch.no_grad():
-                speech = self.tts_model.generate_speech(
-                    inputs["input_ids"].to(self.device),
-                    speaker_embeddings=speaker_embedding.to(self.device),
-                    vocoder=self.vocoder
-                )
-                audio = speech.cpu().numpy()
-                
-                # Process audio segment
-                audio = self.process_audio(audio)
-                audio_segments.append(audio)
-                
-                # Add small silence between sentences
-                silence = np.zeros(int(0.2 * self.sample_rate))
-                audio_segments.append(silence)
-
-        # Concatenate all segments
-        final_speech = np.concatenate(audio_segments)
-        
-        # Final processing on complete audio
-        final_speech = self.process_audio(final_speech)
+            # Get the generated waveform
+            waveform = outputs.waveform.squeeze().cpu().numpy()
         
         # Save the generated speech
-        sf.write(output_path, final_speech, samplerate=self.sample_rate)
-
-    def clone_and_speak(self, voice_samples_dir, text, output_path):
-        """Main function for voice cloning and speech synthesis over text"""
-        try:
-            print("Extracting speaker embedding...")
-            speaker_embedding = self.extract_speaker_embedding(voice_samples_dir)
-            
-            print("Generating speech...")
-            self.synthesize_speech(text, speaker_embedding, output_path)
-            print(f"Speech generated and saved to {output_path}")
-            
-        except Exception as e:
-            print(f"Error during voice cloning: {str(e)}")
-            raise
+        sf.write(output_path, waveform, samplerate=16000)
+        
+    def clone_and_speak(self, voice_samples_dir, text, output_path, language="eng"):
+        """
+        Main function to clone voice and generate speech
+        """
+        print("Extracting speaker embedding...")
+        speaker_embedding = self.extract_speaker_embedding(voice_samples_dir)
+        
+        print(f"Embedding shape: {speaker_embedding.shape}")  # Debug print
+        
+        print("Generating speech...")
+        self.synthesize_speech(text, speaker_embedding, output_path, language)
+        print(f"Speech generated and saved to {output_path}")
 
 # Example usage
 if __name__ == "__main__":
-    cloner = EnhancedVoiceCloner()
+    # Initialize the voice cloner
+    cloner = VoiceCloner()
     
+    # Directory containing voice samples (.wav files)
     voice_samples_dir = "voice_samples"
-    text = "Hello, this is a test of voice cloning using SpeechT5 with X-vector embeddings. Does it sound better?"
-    output_path = "enhanced_speech2.wav"
     
-    cloner.clone_and_speak(voice_samples_dir, text, output_path)
+    # Text to synthesize
+    text = "Hello, this is a test of voice cloning using Facebook MMS-TTS."
+    
+    # Output path for generated speech
+    output_path = "cloned_speech.wav"
+    
+    # Clone voice and generate speech (you can change language to any supported code)
+    # Supported languages: eng, fra, deu, ita, esp, pol, tur, rus, nld, cmn, por, jpn
+    cloner.clone_and_speak(voice_samples_dir, text, output_path, language="eng")
