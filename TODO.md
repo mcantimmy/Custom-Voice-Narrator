@@ -1,6 +1,7 @@
 # Voice Cloner Priority Improvements TODO
 
 ## 1. Research & Understanding Current Architecture
+- High priority
 - Understanding the current architecture (crucial for meaningful improvements)
 - [ ] Deep dive into XTTS v2 architecture and components
   - Study the model's encoder-decoder structure
@@ -9,6 +10,7 @@
   - Document key innovations from YourTTS/Coqui
 
 ## 2. Enhanced Prosody Control
+- Medium priority
 - Prosody control (key for natural-sounding speech)
 - [ ] Implement SSML support for fine-grained control
   - Add emotion-based prosody markers
@@ -17,6 +19,7 @@
   - Study how XTTS handles prosody internally
 
 ## 3. Speaker Embedding Enhancement
+- Medium priority
 - Speaker embedding (core to voice cloning quality)
 - [ ] Improve voice similarity and consistency
   - Add strategic augmentation (noise, reverb, pitch variations)
@@ -25,6 +28,7 @@
   - Study XTTS's current speaker embedding approach
 
 ## 4. Testing & Quality Framework
+- High priority
 - Testing framework (essential for validating improvements)
 - [ ] Build comprehensive testing pipeline
   - Create automated quality metrics
@@ -33,6 +37,7 @@
   - Set up systematic voice comparison tools
 
 ## 5. Natural Speech Elements
+- Low priority
 - Natural speech elements (for better overall quality)
 - [ ] Add context-aware speech improvements
   - Implement dynamic tempo adjustments
