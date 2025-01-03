@@ -3,7 +3,7 @@
 ## 1. Research & Understanding Current Architecture
 - High priority
 - Understanding the current architecture (crucial for meaningful improvements)
-- [ ] Deep dive into XTTS v2 architecture and components
+- [x] Deep dive into XTTS v2 architecture and components
   - Study the model's encoder-decoder structure
   - Understand the speaker conditioning mechanism
   - Research how the emotion embeddings are implemented
