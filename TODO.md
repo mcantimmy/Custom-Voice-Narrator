@@ -4,10 +4,10 @@
 - High priority
 - Understanding the current architecture (crucial for meaningful improvements)
 - [x] Deep dive into XTTS v2 architecture and components
-  - Study the model's encoder-decoder structure
-  - Understand the speaker conditioning mechanism
-  - Research how the emotion embeddings are implemented
-  - Document key innovations from YourTTS/Coqui
+  - [x] Study the model's encoder-decoder structure
+  - [x] Understand the speaker conditioning mechanism
+  - [x] Research how the emotion embeddings are implemented
+  - [x] Document key innovations from YourTTS/Coqui
 
 ## 2. Enhanced Prosody Control
 - Medium priority
