@@ -6,7 +6,7 @@
 - [x] Deep dive into XTTS v2 architecture and components
   - [x] Study the model's encoder-decoder structure
   - [x] Understand the speaker conditioning mechanism
-  - [] Research how the emotion embeddings are implemented
+  - [x] Research how the emotion embeddings are implemented
   - [] Document key innovations from YourTTS/Coqui
 
 ## 2. Enhanced Prosody Control
