@@ -32,7 +32,7 @@ class EnhancedVoiceCloner:
         self.vocoder = self.vocoder.to(self.device)
         
         # Improved audio processing parameters
-        self.sample_rate = 16050  # Increased for better quality
+        self.sample_rate = 16000  # Increased for better quality
         self.chunk_size = 16384  # Increased for better context
         self.overlap = 1024
         # Initialize loudness meter
