@@ -14,7 +14,7 @@
 - Prosody control (key for natural-sounding speech)
 - [x] Implement SSML support for fine-grained control
   - [x] Add emotion-based prosody markers
-  - Develop better pause duration logic
+  - [x] Develop better pause duration logic
   - Implement intonation patterns for questions vs statements
   - Study how XTTS handles prosody internally
 
