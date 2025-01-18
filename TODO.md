@@ -15,7 +15,7 @@
 - [x] Implement SSML support for fine-grained control
   - [x] Add emotion-based prosody markers
   - [x] Develop better pause duration logic
-  - Implement intonation patterns for questions vs statements
+  - [x] Implement intonation patterns for questions vs statements
   - Study how XTTS handles prosody internally
 
 ## 3. Speaker Embedding Enhancement
