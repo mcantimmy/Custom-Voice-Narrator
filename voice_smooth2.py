@@ -68,7 +68,7 @@ class EnhancedVoiceCloner:
         loudness = self.meter.integrated_loudness(audio)
         
         # Normalize to target loudness (-23 LUFS is standard for broadcast)
-        normalized_audio = pyln.normalize.loudness(audio, loudness, -21.0)
+        normalized_audio = pyln.normalize.loudness(audio, loudness, -20.0)
         
         # Apply peak normalization
         normalized_audio = librosa.util.normalize(normalized_audio)
