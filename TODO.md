@@ -16,7 +16,7 @@
   - [x] Add emotion-based prosody markers
   - [x] Develop better pause duration logic
   - [x] Implement intonation patterns for questions vs statements
-  - Study how XTTS handles prosody internally
+  - [x] Study how XTTS handles prosody internally
 
 ## 3. Speaker Embedding Enhancement
 - Medium priority
