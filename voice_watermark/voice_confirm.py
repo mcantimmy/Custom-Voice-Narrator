@@ -112,7 +112,7 @@ class TTSFramework:
         if not text:
             raise ValueError("Empty text provided")
             
-        if len(text) > self.config.get("max_text_length", 500):
+        if len(text) > self.config.get("max_text_length", 1000):
             raise ValueError("Text exceeds maximum allowed length")
         
         # Set default output path if not provided
@@ -174,7 +174,7 @@ class TTSFramework:
             torch.stack([audio.flatten(), watermark.flatten()])
         )[0, 1]
         
-        return correlation > 0.7  # Threshold for watermark detection
+        return correlation > 0.72  # Threshold for watermark detection
 
 # Example usage
 if __name__ == "__main__":
