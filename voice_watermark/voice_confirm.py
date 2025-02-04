@@ -169,7 +169,7 @@ class TTSFramework:
             rng.uniform(-0.0001, 0.0001, size=audio.shape)
         ).to(audio.device)
         
-        # Compare correlation
+        # Compare correlation of the audio and watermark
         correlation = torch.corrcoef(
             torch.stack([audio.flatten(), watermark.flatten()])
         )[0, 1]
