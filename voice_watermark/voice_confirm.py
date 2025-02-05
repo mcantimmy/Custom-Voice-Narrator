@@ -174,7 +174,7 @@ class TTSFramework:
             torch.stack([audio.flatten(), watermark.flatten()])
         )[0, 1]
         
-        return correlation > 0.72  # Threshold for watermark detection
+        return correlation > 0.75  # Threshold for watermark detection
 
 # Example usage
 if __name__ == "__main__":
