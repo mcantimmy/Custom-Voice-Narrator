@@ -56,8 +56,9 @@ def speech_to_text(audio_file=None):
             print("Say something!")
             recognizer.adjust_for_ambient_noise(source)
             audio = recognizer.listen(source, 
-                                      timeout=10.0,           # Maximum time to wait for phrase to start (seconds)
-                                      phrase_time_limit=10.0)  # Maximum time for a phrase (seconds)
+                                      #timeout=10.0,           # Maximum time to wait for phrase to start (seconds)
+                                      #phrase_time_limit=10.0  # Maximum time for a phrase (seconds)
+                                      )                     
     else:
         # Use audio file as source
         with sr.AudioFile(audio_file) as source:
